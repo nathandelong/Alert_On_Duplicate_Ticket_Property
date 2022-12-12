@@ -1,0 +1,38 @@
+const hubspot = require('@hubspot/api-client');
+
+/***** Created 12/9/2022 by Nathan De Long @ HubSpot *****/
+/***** NOTE: this custom action is provided as is; please test to ensure it works as desired in your environment before publishing a live workflow! *****/
+
+exports.main = async (event, callback) => {
+
+/***** hstoken represents the name of the secret you are using for this action. *****/  
+  
+  const hubspotClient = new hubspot.Client({
+    accessToken: process.env.hstoken
+  });
+
+const sku = event.inputFields['sku'];
+  
+const PublicObjectSearchRequest = { filterGroups: [{"filters":[{"value":sku,"propertyName":"sku","operator":"EQ"}]}]};
+
+try {
+  const apiResponse = await hubspotClient.crm.tickets.searchApi.doSearch(PublicObjectSearchRequest);
+  console.log(JSON.stringify(apiResponse.body, null, 2));
+
+  var total = JSON.parse(apiResponse.body.total);
+  var check = ""
+  
+  if (total > 1) {
+    check = "True";
+  } else {
+    check = "False"
+  }
+	
+} 
+  catch (e) {
+  e.message === 'HTTP request failed'
+    ? console.error(JSON.stringify(e.response, null, 2))
+    : console.error(e)
+}
+  callback({ outputFields: {total, check} });
+}
